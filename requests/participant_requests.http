@@ -1,0 +1,38 @@
+### GET /participants
+GET http://localhost:8080/participants
+
+
+### GET /participants
+GET http://localhost:8080/participants?sortBy=login&sortOrder=DESC
+
+
+### GET /participants
+GET http://localhost:8080/participants?key=z
+
+
+### GET /participants/{login}
+GET http://localhost:8080/participants/newuser
+
+
+### POST /participants
+POST http://localhost:8080/participants
+Content-Type: application/json
+
+{
+  "login": "zuser",
+  "password": "zassword"
+}
+
+
+### PUT /participants/{login}
+PUT http://localhost:8080/participants/newuser
+Content-Type: application/json
+
+{
+  "login": "newuser",
+  "password": "updatedPassword"
+}
+
+
+### DELETE /participants/{login}
+DELETE http://localhost:8080/participants/newuser

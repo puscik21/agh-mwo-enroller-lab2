@@ -1,0 +1,34 @@
+### GET /meetings
+GET http://localhost:8080/meetings
+
+
+### GET /meetings/{id}
+GET http://localhost:8080/meetings/2
+
+
+### POST /meetings
+POST http://localhost:8080/meetings
+Content-Type: application/json
+
+{
+  "id": 1,
+  "title": "Talking about everything",
+  "description": "Let's grab a coffee and talking about anything we want",
+  "date": "13-05-2025"
+}
+
+
+### PUT /meetings/{id}
+PUT http://localhost:8080/meetings/2
+Content-Type: application/json
+
+{
+  "id": 2,
+  "title": "Daily",
+  "description": "Daily meeting",
+  "date": "20-05-2025"
+}
+
+
+### DELETE /meetings/{id}
+DELETE http://localhost:8080/meetings/4

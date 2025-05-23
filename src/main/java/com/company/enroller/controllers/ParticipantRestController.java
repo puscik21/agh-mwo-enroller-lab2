@@ -1,67 +1,63 @@
 package com.company.enroller.controllers;
 
-import java.util.Collection;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
+import com.company.enroller.controllers.validation.SortOrder;
 import com.company.enroller.model.Participant;
 import com.company.enroller.persistence.ParticipantService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.net.URI;
+import java.util.List;
+import java.util.Set;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/participants")
 public class ParticipantRestController {
 
-	@Autowired
-	ParticipantService participantService;
+    private final ParticipantService participantService;
 
-	@RequestMapping(value = "", method = RequestMethod.GET)
-	public ResponseEntity<?> getParticipants() {
-		Collection<Participant> participants = participantService.getAll();
-		return new ResponseEntity<Collection<Participant>>(participants, HttpStatus.OK);
-	}
+    private static final Set<String> ALLOWED_SORT_BY_FIELDS = Set.of("login");
 
-	@RequestMapping(value = "/{id}", method = RequestMethod.GET)
-	public ResponseEntity<?> getParticipant(@PathVariable("id") String login) {
-		Participant participant = participantService.findByLogin(login);
-		if (participant == null) {
-			return new ResponseEntity(HttpStatus.NOT_FOUND);
-		}
-		return new ResponseEntity<Participant>(participant, HttpStatus.OK);
-	}
+    @GetMapping
+    public List<Participant> getParticipants(@RequestParam(required = false) String key,
+                                             @RequestParam(defaultValue = "login") String sortBy,
+                                             @RequestParam(defaultValue = "ASC") String sortOrder) {
+        if (!ALLOWED_SORT_BY_FIELDS.contains(sortBy)) {
+            throw new IllegalArgumentException("Invalid sortBy " + sortBy);
+        }
+        return participantService.getAll(key, sortBy, SortOrder.valueOf(sortOrder));
+    }
 
-	@RequestMapping(value = "", method = RequestMethod.POST)
-	public ResponseEntity<?> addParticipant(@RequestBody Participant participant) {
-		if (participantService.findByLogin(participant.getLogin()) != null) {
-			return new ResponseEntity<String>(
-					"Unable to create. A participant with login " + participant.getLogin() + " already exist.",
-					HttpStatus.CONFLICT);
-		}
-		participantService.add(participant);
-		return new ResponseEntity<Participant>(participant, HttpStatus.CREATED);
-	}
+    @GetMapping("/{login}")
+    public Participant getParticipant(@PathVariable String login) {
+        return participantService.getByLogin(login);
+    }
 
-	@RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
-	public ResponseEntity<?> delete(@PathVariable("id") String login) {
-		Participant participant = participantService.findByLogin(login);
-		if (participant == null) {
-			return new ResponseEntity(HttpStatus.NOT_FOUND);
-		}
-		participantService.delete(participant);
-		return new ResponseEntity<Participant>(HttpStatus.OK);
-	}
+    @PostMapping
+    public ResponseEntity<Participant> registerParticipant(@RequestBody Participant participant) {
+        Participant registeredParticipant = participantService.register(participant);
+        URI location = ControllerUtils.getLocation("/{login}", registeredParticipant.getLogin());
+        return ResponseEntity.created(location).body(registeredParticipant);
+    }
 
-	@RequestMapping(value = "/{id}", method = RequestMethod.PUT)
-	public ResponseEntity<?> update(@PathVariable("id") String login, @RequestBody Participant updatedParticipant) {
-		Participant participant = participantService.findByLogin(login);
-		if (participant == null) {
-			return new ResponseEntity(HttpStatus.NOT_FOUND);
-		}
-		participant.setPassword(updatedParticipant.getPassword());
-		participantService.update(participant);
-		return new ResponseEntity<Participant>(HttpStatus.OK);
-	}
+    @PutMapping("/{login}")
+    public Participant updateParticipant(@PathVariable String login, @RequestBody Participant participant) {
+        return participantService.update(login, participant);
+    }
 
+    @DeleteMapping("/{login}")
+    public ResponseEntity<Void> deleteParticipant(@PathVariable String login) {
+        participantService.removeByLogin(login);
+        return ResponseEntity.noContent().build();
+    }
 }
